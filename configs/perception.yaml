@@ -1,0 +1,99 @@
+update_mode: per_task   # observe() called once per sub-task
+
+noise:
+  hole:
+    easy:
+      pos_sigma: 0.001          # 1 mm σ
+      bias: [0.0, 0.0, 0.0]
+    medium:
+      pos_sigma: 0.003          # 3 mm σ
+      bias: [0.0, 0.0, 0.0]
+    hard:
+      pos_sigma: 0.005          # 5 mm σ
+      bias: [0.0, 0.0, 0.0]
+    custom:
+      pos_sigma: 0.0
+      bias: [0.0, 0.0, 0.0]
+  peg:
+    easy:
+      pos_sigma: 0.002          # 2 mm σ
+      rot_sigma_deg: 2.0
+    medium:
+      pos_sigma: 0.005          # 5 mm σ
+      rot_sigma_deg: 5.0
+    hard:
+      pos_sigma: 0.010          # 10 mm σ
+      rot_sigma_deg: 10.0
+    custom:
+      pos_sigma: 0.0
+      rot_sigma_deg: 0.0
+
+# Camera rendering settings (used by CameraModule)
+cameras:
+  names: [camera_top, camera_oblique]
+  resolution: [640, 480]   # [width, height]
+
+# Deterministic shape-matching: which hole(s) each peg can mate with
+shape_matching:
+  peg:        [round_hole]
+  peg_square: [square_hole]
+  peg_rect:   [rect_slot]
+
+# Objects the module reads true poses for
+objects: [peg, peg_square, peg_rect]
+holes:   [round_hole, square_hole, rect_slot]
+
+# ── RGB-D point-cloud backend ─────────────────────────────────────────────
+# Color thresholds use HSV (H ∈ [0,360], S and V ∈ [0,1]).
+# Values measured from MuJoCo-rendered top camera images.
+rgbd_pointcloud:
+  camera: camera_top             # which camera to render from
+  table_z: 0.250                 # world-frame z of table top surface
+  peg_z_min_margin: 0.005        # keep points at z > table_z + margin
+  peg_z_max: 0.420               # discard points above this (arm geometry)
+  min_points: 8                  # minimum valid points for a detection
+  outlier_k: 5                   # k-nearest-neighbours for outlier filter
+  outlier_std: 2.0               # outlier rejection threshold (std devs)
+  hole_noise_level: custom       # noise applied to hole GT poses (custom=zero)
+  peg_colors:
+    peg:                         # round peg — gold/yellow
+      h_min: 45
+      h_max: 72
+      s_min: 0.25
+      v_min: 0.25
+      center_method: centroid    # centroid / bbox2d / pca_obb
+      morph:
+        largest_component: false
+    peg_square:                  # square peg — cyan-blue
+      h_min: 162
+      h_max: 207
+      s_min: 0.20
+      v_min: 0.25
+      center_method: centroid
+      morph:
+        largest_component: false
+    peg_rect:                    # rect peg — orange-red; LCC clears stray gold pixels
+      h_min: 6
+      h_max: 44
+      s_min: 0.25
+      v_min: 0.25
+      center_method: pca_obb     # oriented bounding-box after LCC cleaning
+      morph:
+        largest_component: true  # removes ~27 stray gold-boundary pixels → < 3 mm error
+
+  # ── Board pose estimation ─────────────────────────────────────────────────
+  # Board top surface is at z=0.310; detected via depth z-band (no color needed
+  # since the headlight renders the board nearly white / S≈0.03).
+  board:
+    camera: camera_top
+    top_z: 0.310             # board top surface world Z (board_center_z + half_z)
+    z_lo_margin: 0.005       # keep z >= top_z - 0.005
+    z_hi_margin: 0.005       # keep z <= top_z + 0.005
+    x_range: [0.44, 0.67]    # coarse spatial filter: excludes staging area (x≈0.40)
+    y_range: [0.03, 0.18]    # excludes pegs at y≈[-0.17, 0.00]
+    min_points: 200
+    # CAD offsets of each hole entrance from board centre, in board-local XY frame
+    hole_offsets:
+      round_hole:  {x: -0.060, y: 0.0}
+      square_hole: {x:  0.000, y: 0.0}
+      rect_slot:   {x: +0.060, y: 0.0}

@@ -1,0 +1,90 @@
+robot:
+  base_pos: [0.0, 0.0, 0.0]
+  home_qpos: [0.0, -0.785, 0.0, -2.356, 0.0, 1.571, 0.785]
+  gripper_open_ctrl: 255.0
+  gripper_close_ctrl: 76.0
+
+sim:
+  dt: 0.002
+  render_fps: 30
+
+# ── Table ──────────────────────────────────────────────────────────────────
+# table_top_z = center_z + half_z = 0.125 + 0.125 = 0.250 m
+table:
+  center: [0.50, 0.00, 0.125]
+  half_size: [0.35, 0.22, 0.125]
+
+# ── Assembly board (sits flush on table top) ───────────────────────────────
+# board_bottom = 0.280 - 0.030 = 0.250 = table_top  ✓
+# board_top    = 0.280 + 0.030 = 0.310 m
+# hole_depth   = 0.048 m  →  hole_floor_z = 0.310 - 0.048 = 0.262 m  (12 mm base slab)
+# insertion_depth_goal = 0.045 m  →  peg tip stops at 0.310 - 0.045 = 0.265 m (3 mm above floor)
+assembly_board:
+  center: [0.55, 0.10, 0.280]
+  half_size: [0.100, 0.060, 0.030]
+  hole_depth: 0.055          # depth of each pocket from board top; 10 mm floor margin over 0.045 goal
+  hole_spacing: 0.060        # centre-to-centre x distance between holes
+
+# ── Holes / slots on the assembly board ───────────────────────────────────
+# All local_x_offset values are in board-local x frame.
+holes:
+  round:
+    name: round_hole
+    local_x_offset: -0.060
+    radius: 0.014            # peg radius 0.010 + 4 mm clearance (matches single-task scene)
+  square:
+    name: square_hole
+    local_x_offset:  0.000
+    half_size: [0.013, 0.013]     # peg 20×20 mm + 3 mm clearance per side
+  rect:
+    name: rect_slot
+    local_x_offset: +0.060
+    half_size: [0.013, 0.019]     # peg 15×30 mm + 3 mm x-clearance, 4 mm y-clearance
+
+# ── Pegs (initial positions on staging area) ──────────────────────────────
+# Staging area is on the LEFT side of the table.
+# Peg bottoms sit exactly on table_top (0.250 m):
+#   round  centre_z = 0.250 + 0.070 = 0.320  (half_length = 0.070)
+#   square centre_z = 0.250 + 0.040 = 0.290  (half_z      = 0.040)
+#   rect   centre_z = 0.250 + 0.040 = 0.290
+pegs:
+  round:
+    name: peg                    # body name driven by the mainline pipeline
+    radius: 0.010
+    half_length: 0.070
+    mass: 0.100
+    initial_pos: [0.40, -0.17, 0.320]
+    color: [0.85, 0.65, 0.10, 1.0]
+
+  square:
+    name: peg_square
+    half_size: [0.010, 0.010, 0.060]   # 20 × 20 × 120 mm (taller so gripper clears board)
+    mass: 0.100
+    initial_pos: [0.40, -0.09, 0.310]
+    color: [0.20, 0.60, 0.85, 1.0]
+
+  rect:
+    name: peg_rect
+    half_size: [0.0075, 0.015, 0.060]  # 15 × 30 × 120 mm
+    mass: 0.100
+    initial_pos: [0.40, -0.01, 0.310]
+    color: [0.85, 0.35, 0.20, 1.0]
+
+# ── Cameras ───────────────────────────────────────────────────────────────
+# Positions and lookat targets are in world coordinates.
+# up: world-frame direction that maps to "up" in the rendered image.
+cameras:
+  camera_top:
+    pos: [0.50, 0.00, 1.50]
+    lookat: [0.50, 0.00, 0.28]
+    fov: 55
+  camera_oblique:
+    pos: [0.95, -0.45, 0.85]
+    lookat: [0.55, 0.10, 0.31]
+    fov: 60
+
+# ── Task mapping ──────────────────────────────────────────────────────────
+task_sequence:
+  - [peg, round_hole]
+  - [peg_square, square_hole]
+  - [peg_rect, rect_slot]
