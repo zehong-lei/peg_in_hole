@@ -20,7 +20,7 @@ from typing import Optional
 import numpy as np
 
 from src.estimators.state_estimator import BeliefState
-from .lcs_mpc import LCSMPC, ReducedLCSModel, N_CONTACTS
+from .lcs_mpc import LCSMPC, ReducedLCSModel
 from .preinsert_ocp import PreInsertionOCP, OCPResult
 from .trajectory_utils import TrajectoryTracker
 
@@ -224,9 +224,6 @@ class ScriptedPlanner:
         self._mpc_failures = 0
         self._prev_ee_pos = None
         self._mpc_solve_times = []
-        if self._mpc is not None:
-            self._mpc._z_warm = None
-            self._mpc._last_lambda = np.zeros(N_CONTACTS)
         # EE-space OCP reset
         self._ocp_tracker = None
         self._ocp_result  = None
@@ -565,7 +562,6 @@ class ScriptedPlanner:
                                    + rec_cfg.get("retract_height", 0.003))
             self._rec_state = "retract"
             self._rec_contact_steps = 0
-            self._mpc._z_warm = None   # reset warm-start after recovery
             return self._make_cmd(belief.ee_pos.copy(), gripper=gripper,
                                   ctrl_mode='recovery')
 
@@ -638,7 +634,6 @@ class ScriptedPlanner:
                 self._rec_retract_z = belief.ee_pos[2] + rec_cfg.get("retract_height", 0.003)
                 self._rec_state = "retract"
                 self._rec_contact_steps = 0
-                self._mpc._z_warm = None   # reset MPC warm-start after retract
             else:
                 self._rec_contact_steps = 0
 

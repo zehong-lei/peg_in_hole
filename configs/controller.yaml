@@ -7,23 +7,6 @@ position_controller:
   max_joint_vel: 2.0   # rad/s clamp on joint velocity
   lookahead: 0.30      # s: ctrl = q + dq*lookahead so Panda servo gets enough error
 
-impedance_controller:
-  # During free-space approach: stiff position tracking
-  kp_pos_free: [300.0, 300.0, 300.0]    # N/m
-  kd_pos_free: [30.0, 30.0, 30.0]       # N·s/m
-  kp_rot_free: [30.0, 30.0, 30.0]       # N·m/rad
-  kd_rot_free: [3.0, 3.0, 3.0]
-
-  # During insertion: compliant x/y, downward z force
-  kp_pos_insert: [80.0, 80.0, 50.0]     # low x/y, z pushes forward
-  kd_pos_insert: [15.0, 15.0, 10.0]
-  kp_rot_insert: [10.0, 10.0, 20.0]     # allow x/y tilt, resist z rotation
-  kd_rot_insert: [1.0, 1.0, 2.0]
-  insert_force_z: 8.0                    # N, constant downward insertion force
-
-  gravity_comp: true
-  max_torque: 87.0                       # Nm
-
 gripper:
   open_ctrl: 255.0
   close_ctrl: 76.0

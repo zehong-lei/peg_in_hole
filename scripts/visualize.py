@@ -22,7 +22,6 @@ from src.envs.assembly_env import AssemblyEnv
 from src.sensors.sensor_wrapper import SensorWrapper
 from src.estimators.state_estimator import StateEstimator
 from src.controllers.position_controller import PositionController
-from src.controllers.impedance_controller import ImpedanceController
 from src.controllers.operational_space_controller import OperationalSpaceController
 from src.planners.scripted_planner import ScriptedPlanner, Stage
 from src.tasks.multi_task_assembly import MultiTaskAssemblyTask
@@ -73,7 +72,7 @@ def main() -> None:
     parser.add_argument("--speed",  type=float, default=1.0,
                         help="Playback multiplier (2 = 2× real-time)")
     parser.add_argument("--no-osc", action="store_true",
-                        help="Disable OSC (use impedance controller only)")
+                        help="Disable OSC (free-space position controller everywhere)")
     args = parser.parse_args()
 
     task_sequence = resolve_sequence(args.tasks)
@@ -103,8 +102,6 @@ def main() -> None:
     planner  = ScriptedPlanner(task_cfg, ctrl_cfg)
     pos_ctrl = PositionController(ctrl_cfg["position_controller"],
                                   dt=task_cfg["sim"]["dt"])
-    imp_ctrl = ImpedanceController(ctrl_cfg["impedance_controller"],
-                                   dt=task_cfg["sim"]["dt"])
     os_ctrl  = (OperationalSpaceController(
                     ctrl_cfg["operational_space_controller"],
                     dt=task_cfg["sim"]["dt"])
@@ -119,7 +116,7 @@ def main() -> None:
 
     task = MultiTaskAssemblyTask(
         env, sensor, estimator, planner,
-        pos_ctrl, imp_ctrl, task_cfg, ctrl_cfg,
+        pos_ctrl, task_cfg, ctrl_cfg,
         os_ctrl=os_ctrl,
         task_sequence=task_sequence,
         perception=perception,

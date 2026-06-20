@@ -80,12 +80,7 @@ lcs_mpc:
     Q_z: 200.0
     Q_vel: 1.0
     R_u: 0.01
-    rho_comp: 100.0
     Q_N_scale: 5.0
     u_max: [5.0, 5.0, 10.0]
     u_min: [-5.0, -5.0, 0.5]
-    lam_max: 50.0
     mpc_freq_ratio: 10
-    solver: lqr
-    R_smooth: 0.05
-    w_pen: 1000.0

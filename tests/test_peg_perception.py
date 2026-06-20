@@ -213,7 +213,6 @@ def run_tests(save_debug: bool = False) -> list[tuple[str, str, str]]:
         from src.sensors.sensor_wrapper import SensorWrapper
         from src.estimators.state_estimator import StateEstimator
         from src.controllers.position_controller import PositionController
-        from src.controllers.impedance_controller import ImpedanceController
         from src.planners.scripted_planner import ScriptedPlanner
         from src.tasks.multi_task_assembly import MultiTaskAssemblyTask
 
@@ -233,12 +232,10 @@ def run_tests(save_debug: bool = False) -> list[tuple[str, str, str]]:
         planner   = ScriptedPlanner(task_cfg, ctrl_cfg)
         pos_ctrl  = PositionController(ctrl_cfg["position_controller"],
                                        env2.dt)
-        imp_ctrl  = ImpedanceController(ctrl_cfg["impedance_controller"],
-                                        env2.dt)
 
         task = MultiTaskAssemblyTask(
             env2, sensor, estimator, planner,
-            pos_ctrl, imp_ctrl,
+            pos_ctrl,
             task_cfg, ctrl_cfg,
             perception=pm2,
         )

@@ -189,7 +189,6 @@ def run_tests(save_debug: bool = False) -> list[tuple[str, str, str]]:
         from src.sensors.sensor_wrapper import SensorWrapper
         from src.estimators.state_estimator import StateEstimator
         from src.controllers.position_controller import PositionController
-        from src.controllers.impedance_controller import ImpedanceController
         from src.controllers.operational_space_controller import OperationalSpaceController
         from src.planners.scripted_planner import ScriptedPlanner
         from src.tasks.multi_task_assembly import MultiTaskAssemblyTask
@@ -208,7 +207,6 @@ def run_tests(save_debug: bool = False) -> list[tuple[str, str, str]]:
         estimat  = StateEstimator(noise_cfg)
         planner  = ScriptedPlanner(task_cfg, ctrl_cfg)
         pos_ctrl = PositionController(ctrl_cfg["position_controller"], env2.dt)
-        imp_ctrl = ImpedanceController(ctrl_cfg["impedance_controller"], env2.dt)
         # OSC — instantiate when osc.enabled (matches mainline)
         p5_on = task_cfg.get("osc", {}).get("enabled", False)
         os_ctrl = (OperationalSpaceController(
@@ -217,7 +215,7 @@ def run_tests(save_debug: bool = False) -> list[tuple[str, str, str]]:
 
         task = MultiTaskAssemblyTask(
             env2, sensor, estimat, planner,
-            pos_ctrl, imp_ctrl,
+            pos_ctrl,
             task_cfg, ctrl_cfg,
             os_ctrl=os_ctrl,
             perception=pm2,

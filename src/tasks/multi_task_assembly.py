@@ -25,7 +25,6 @@ from src.envs.assembly_env import AssemblyEnv
 from src.sensors.sensor_wrapper import SensorWrapper
 from src.estimators.state_estimator import StateEstimator
 from src.controllers.position_controller import PositionController
-from src.controllers.impedance_controller import ImpedanceController
 from src.controllers.operational_space_controller import OperationalSpaceController
 from src.planners.scripted_planner import ScriptedPlanner, Stage
 from src.planners.trajectory_utils import compute_path_length, compute_smoothness, compute_min_board_clearance
@@ -41,7 +40,6 @@ class MultiTaskAssemblyTask:
     estimator : StateEstimator
     planner   : ScriptedPlanner
     pos_ctrl  : PositionController
-    imp_ctrl  : ImpedanceController
     task_cfg  : dict  (task.yaml)
     ctrl_cfg  : dict  (controller.yaml)
     os_ctrl   : OperationalSpaceController | None
@@ -55,35 +53,25 @@ class MultiTaskAssemblyTask:
                  estimator: StateEstimator,
                  planner: ScriptedPlanner,
                  pos_ctrl: PositionController,
-                 imp_ctrl: ImpedanceController,
                  task_cfg: dict,
                  ctrl_cfg: dict,
                  os_ctrl: Optional[OperationalSpaceController] = None,
                  task_sequence: Optional[list] = None,
-                 perception=None,
-                 controller_kind: Optional[str] = None):
+                 perception=None):
         self._env      = env
         self._sensor   = sensor
         self._estimator = estimator
         self._planner  = planner
         self._pos_ctrl = pos_ctrl
-        self._imp_ctrl = imp_ctrl
         self._os_ctrl  = os_ctrl
         self._tc       = task_cfg
         self._cc       = ctrl_cfg
         self._perception = perception   # PerceptionModule | None
 
-        # Controller axis: which low-level controller realises planner commands.
-        # {'jointpos','impedance','osc','osc-lambda'}.  When None, fall back to
-        # the legacy osc.enabled-based behaviour for backward compatibility.
-        if controller_kind is None:
-            controller_kind = ('osc-lambda'
-                               if (os_ctrl is not None
-                                   and task_cfg.get("osc", {}).get("enabled", False))
-                               else 'jointpos')
-        self._controller_kind = controller_kind
-        self._use_os = (controller_kind in ('osc', 'osc-lambda')
-                        and os_ctrl is not None)
+        # Mainline low-level control: operational-space controller (with inertia
+        # shaping) realises compliant/feedforward-bearing commands; free-space
+        # tracking always uses the Cartesian position controller.
+        self._use_os = os_ctrl is not None
 
         if task_sequence is not None:
             self._task_sequence = [tuple(p) for p in task_sequence]
@@ -255,48 +243,25 @@ class MultiTaskAssemblyTask:
                 cmd.target_pos, cmd.target_rot, J, qfrc_bias)
             ctrl[:7] = q_des
 
-            # Controller axis selects which low-level controller realises the
-            # planner command.  A "compliant phase" is any insertion/recovery or
-            # feedforward-bearing command; free-space tracking always uses the
-            # position controller regardless of controller_kind.
+            # A "compliant phase" is any insertion/recovery or feedforward-bearing
+            # command; it is realised by the operational-space controller (with
+            # inertia shaping + LCS-MPC force feedforward).  Free-space tracking
+            # always uses the Cartesian position controller.
             _compliant_phase = (cmd.use_impedance or cmd.use_lcs_mpc
                                 or cmd.v_des is not None
                                 or cmd.ctrl_mode in ('insertion', 'recovery'))
 
-            if self._controller_kind == 'jointpos':
-                # Pure position control everywhere; ignore feedforward terms.
-                tau, _ = self._pos_ctrl.compute(
+            if self._use_os and _compliant_phase:
+                tau, q_des_os = self._os_ctrl.compute(
                     q_curr, qdot_curr, ee_pos, ee_rot,
-                    cmd.target_pos, cmd.target_rot, J, qfrc_bias)
-            elif self._controller_kind == 'impedance':
-                if cmd.use_lcs_mpc and cmd.F_des is not None:
-                    tau = self._imp_ctrl.compute_insert_mpc(
-                        q_curr, qdot_curr, ee_pos, ee_rot,
-                        cmd.target_pos, cmd.target_rot, J, qfrc_bias, cmd.F_des)
-                elif _compliant_phase and cmd.ctrl_mode != 'free_space':
-                    tau = self._imp_ctrl.compute_insert(
-                        q_curr, qdot_curr, ee_pos, ee_rot,
-                        cmd.target_pos, cmd.target_rot, J, qfrc_bias)
-                else:
-                    tau, _ = self._pos_ctrl.compute(
-                        q_curr, qdot_curr, ee_pos, ee_rot,
-                        cmd.target_pos, cmd.target_rot, J, qfrc_bias)
-            elif self._use_os:   # 'osc' | 'osc-lambda'
-                if _compliant_phase:
-                    tau, q_des_os = self._os_ctrl.compute(
-                        q_curr, qdot_curr, ee_pos, ee_rot,
-                        cmd.target_pos, cmd.target_rot, J, qfrc_bias,
-                        v_des=cmd.v_des,
-                        a_des=cmd.a_des,
-                        F_des=cmd.F_des,
-                        mode=cmd.ctrl_mode,
-                        M=M7,
-                    )
-                    ctrl[:7] = q_des_os
-                else:
-                    tau, _ = self._pos_ctrl.compute(
-                        q_curr, qdot_curr, ee_pos, ee_rot,
-                        cmd.target_pos, cmd.target_rot, J, qfrc_bias)
+                    cmd.target_pos, cmd.target_rot, J, qfrc_bias,
+                    v_des=cmd.v_des,
+                    a_des=cmd.a_des,
+                    F_des=cmd.F_des,
+                    mode=cmd.ctrl_mode,
+                    M=M7,
+                )
+                ctrl[:7] = q_des_os
             else:
                 tau, _ = self._pos_ctrl.compute(
                     q_curr, qdot_curr, ee_pos, ee_rot,

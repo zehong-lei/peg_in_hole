@@ -190,7 +190,6 @@ def test_t7_backward_compat():
     from src.sensors.sensor_wrapper import SensorWrapper
     from src.estimators.state_estimator import StateEstimator
     from src.controllers.position_controller import PositionController
-    from src.controllers.impedance_controller import ImpedanceController
     from src.planners.scripted_planner import ScriptedPlanner
     from src.tasks.multi_task_assembly import MultiTaskAssemblyTask
 
@@ -213,11 +212,9 @@ def test_t7_backward_compat():
     planner   = ScriptedPlanner(task_cfg, ctrl_cfg)
     pos_ctrl  = PositionController(ctrl_cfg["position_controller"],
                                    dt=task_cfg["sim"]["dt"])
-    imp_ctrl  = ImpedanceController(ctrl_cfg["impedance_controller"],
-                                    dt=task_cfg["sim"]["dt"])
 
     task = MultiTaskAssemblyTask(
-        env, sensor, estimator, planner, pos_ctrl, imp_ctrl,
+        env, sensor, estimator, planner, pos_ctrl,
         task_cfg, ctrl_cfg,
         # No perception kwarg — old signature still works
         task_sequence=[("peg", "round_hole")],
@@ -236,7 +233,6 @@ def test_t8_task_derivation_from_perception():
     from src.sensors.sensor_wrapper import SensorWrapper
     from src.estimators.state_estimator import StateEstimator
     from src.controllers.position_controller import PositionController
-    from src.controllers.impedance_controller import ImpedanceController
     from src.planners.scripted_planner import ScriptedPlanner
     from src.tasks.multi_task_assembly import MultiTaskAssemblyTask
     from src.perception import PerceptionModule
@@ -260,14 +256,12 @@ def test_t8_task_derivation_from_perception():
     planner   = ScriptedPlanner(task_cfg, ctrl_cfg)
     pos_ctrl  = PositionController(ctrl_cfg["position_controller"],
                                    dt=task_cfg["sim"]["dt"])
-    imp_ctrl  = ImpedanceController(ctrl_cfg["impedance_controller"],
-                                    dt=task_cfg["sim"]["dt"])
 
     env.reset()
     perception = PerceptionModule(env, pcfg, noise_level="easy", seed=0)
 
     task = MultiTaskAssemblyTask(
-        env, sensor, estimator, planner, pos_ctrl, imp_ctrl,
+        env, sensor, estimator, planner, pos_ctrl,
         task_cfg, ctrl_cfg,
         task_sequence=None,    # must be derived from perception
         perception=perception,
@@ -288,7 +282,6 @@ def test_t9_episode_result_keys():
     from src.sensors.sensor_wrapper import SensorWrapper
     from src.estimators.state_estimator import StateEstimator
     from src.controllers.position_controller import PositionController
-    from src.controllers.impedance_controller import ImpedanceController
     from src.planners.scripted_planner import ScriptedPlanner
     from src.tasks.multi_task_assembly import MultiTaskAssemblyTask
     from src.perception import PerceptionModule
@@ -312,14 +305,12 @@ def test_t9_episode_result_keys():
     planner   = ScriptedPlanner(task_cfg, ctrl_cfg)
     pos_ctrl  = PositionController(ctrl_cfg["position_controller"],
                                    dt=task_cfg["sim"]["dt"])
-    imp_ctrl  = ImpedanceController(ctrl_cfg["impedance_controller"],
-                                    dt=task_cfg["sim"]["dt"])
 
     env.reset()
     perception = PerceptionModule(env, pcfg, noise_level="easy", seed=0)
 
     task = MultiTaskAssemblyTask(
-        env, sensor, estimator, planner, pos_ctrl, imp_ctrl,
+        env, sensor, estimator, planner, pos_ctrl,
         task_cfg, ctrl_cfg,
         task_sequence=None,
         perception=perception,
