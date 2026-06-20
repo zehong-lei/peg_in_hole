@@ -1,8 +1,8 @@
 # 本项目的技术方法（按机器人臂框架组织）
 
 > 项目：MuJoCo Franka Panda 多形状装配 / Peg-in-Hole 系统。
-> 本文只描述**主线流水线**实际使用的技术方法，按 3.1–3.10 归类。
-> 主线 = 感知位姿 → 末端预插入 OCP → 操作空间惯量整形控制 + 接触隐式 LCS-MPC 插入力前馈。
+> 本项目现为**单一流水线**（已剥离全部多轴对照代码），下列为它实际使用的技术方法，按 3.1–3.10 归类。
+> 流水线 = 感知位姿 → 末端预插入 OCP → 操作空间惯量整形控制（OSC-λ）+ 接触隐式 LCS-MPC 插入力前馈 + 自由段笛卡尔位置跟踪。
 > 括号内的术语表仅为参考，本项目只涉及其中一部分。
 
 ---
@@ -106,8 +106,8 @@
 # Technical Methods in This Project (Organized by the Robot-Arm Framework)
 
 > Project: MuJoCo Franka Panda multi-shape assembly / peg-in-hole system.
-> This document describes only the techniques used by the **mainline pipeline**, grouped under 3.1–3.10.
-> Mainline = perceived pose → end-effector pre-insertion OCP → operational-space inertia-shaping control + contact-implicit LCS-MPC insertion force feedforward.
+> The project is now a **single pipeline** (all multi-axis comparison code removed); the techniques it actually uses are listed below, grouped under 3.1–3.10.
+> Pipeline = perceived pose → end-effector pre-insertion OCP → operational-space inertia-shaping control (OSC-λ) + contact-implicit LCS-MPC insertion force feedforward + free-space Cartesian position tracking.
 > The parenthetical term lists in the framework are reference vocabulary only; this project covers a subset of them.
 
 ---
