@@ -41,7 +41,7 @@ $$
 
 ### 3.1 降阶 LCS
 
-状态 `x = [eₓ, e_y, z, ėₓ, ė_y, ż]`，控制 `u = [Fₓ, F_y, F_z]`：
+状态 `x = [e_x, e_y, z, ė_x, ė_y, ż]`，控制 `u = [F_x, F_y, F_z]`：
 
 $$
 x_{k+1} = A x_k + B u_k + D \lambda_k, \qquad 0 \leq \lambda_k \perp \phi(x_k)=E x_k + c \geq 0
